@@ -7,7 +7,8 @@ PYTHONDONTWRITEBYTECODE = "1"
 [phases.install]
 dependsOn = ["setup"]
 cmds = [
-    "apt-get update && apt-get install -y libpq-dev gcc g++ build-essential poppler-utils python3-dev postgresql-client",
+    "apt-get update && apt-get install -y libpq-dev gcc g++ build-essential poppler-utils python3-dev postgresql-client python3-pip",
+    "python -m ensurepip --upgrade || python -m ensurepip || apt-get install -y python3-pip",
     "python -m pip install --upgrade pip setuptools wheel",
     "python -m pip install psycopg2-binary==2.9.10",
     "python -m pip install -r requirements.txt"
