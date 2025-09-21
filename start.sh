@@ -46,12 +46,12 @@ echo "✅ Environment validation passed"
 echo "🔧 Configuration:"
 echo "   - Port: $PORT"
 echo "   - Environment: $ENVIRONMENT"
-echo "   - Python: $(python --version)"
+echo "   - Python: $(python3 --version)"
 echo "   - Workers: ${WORKERS:-4}"
 
 # Pre-flight database check
 echo "🔍 Testing database connectivity..."
-python -c "
+python3 -c "
 import os
 import psycopg2
 try:
@@ -65,7 +65,7 @@ except Exception as e:
 
 # Test OpenAI API connectivity
 echo "🔍 Testing OpenAI API connectivity..."
-python -c "
+python3 -c "
 import os
 from openai import OpenAI
 try:
@@ -82,12 +82,9 @@ echo "🎉 Pre-flight checks completed successfully"
 # Start the application with production settings
 echo "🚀 Starting FastAPI server on port $PORT..."
 
-exec uvicorn src.main:app \
+exec python3 -m uvicorn src.main:app \
     --host 0.0.0.0 \
     --port $PORT \
-    --workers ${WORKERS:-4} \
-    --worker-class uvicorn.workers.UvicornWorker \
     --access-log \
     --log-level ${LOG_LEVEL:-info} \
-    --no-use-colors \
     --loop uvloop
