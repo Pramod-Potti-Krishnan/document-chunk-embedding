@@ -18,7 +18,7 @@ WORKERS = "4"
 RELOAD = "false"
 
 # Logging configuration for production
-LOG_LEVEL = "INFO"
+LOG_LEVEL = "info"
 LOG_FORMAT = "json"
 
 # File upload settings for Railway

@@ -92,5 +92,5 @@ exec python3 -m uvicorn src.main:app \
     --host 0.0.0.0 \
     --port $PORT \
     --access-log \
-    --log-level ${LOG_LEVEL:-info} \
+    --log-level $(echo ${LOG_LEVEL:-info} | tr '[:upper:]' '[:lower:]') \
     --loop uvloop
