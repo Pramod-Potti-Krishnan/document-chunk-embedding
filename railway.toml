@@ -11,6 +11,7 @@ restartPolicyMaxRetries = 3
 [environment]
 # Environment will be set in Railway dashboard
 ENVIRONMENT = "production"
+# Force rebuild - v2
 PORT = "$PORT"  # Railway automatically provides this
 HOST = "0.0.0.0"
 WORKERS = "4"
