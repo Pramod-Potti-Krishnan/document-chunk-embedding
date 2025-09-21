@@ -1,0 +1,502 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  lint-and-format:
+    runs-on: ubuntu-latest
+    name: Code Quality Checks
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.11
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install black ruff mypy
+        pip install -r requirements.txt
+
+    - name: Run Black (code formatting)
+      run: black --check --diff .
+
+    - name: Run Ruff (linting)
+      run: ruff check .
+
+    - name: Run MyPy (type checking)
+      run: mypy src/ --ignore-missing-imports
+
+  test-unit:
+    runs-on: ubuntu-latest
+    name: Unit Tests
+    needs: lint-and-format
+
+    strategy:
+      matrix:
+        python-version: [3.10, 3.11, 3.12]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-${{ matrix.python-version }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-${{ matrix.python-version }}-pip-
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Install test dependencies
+      run: |
+        pip install pytest-cov pytest-mock pytest-asyncio pytest-timeout
+
+    - name: Run unit tests
+      run: |
+        pytest tests/unit/ \
+          --cov=src \
+          --cov-report=xml \
+          --cov-report=html \
+          --cov-fail-under=80 \
+          --junit-xml=junit-unit.xml \
+          -v
+
+    - name: Upload unit test coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unit
+        name: unit-tests-${{ matrix.python-version }}
+
+    - name: Upload unit test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: unit-test-results-${{ matrix.python-version }}
+        path: |
+          junit-unit.xml
+          htmlcov/
+
+  test-integration:
+    runs-on: ubuntu-latest
+    name: Integration Tests
+    needs: lint-and-format
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_USER: test_user
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.11
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Install test dependencies
+      run: |
+        pip install pytest-cov pytest-mock pytest-asyncio pytest-timeout
+
+    - name: Wait for services
+      run: |
+        sleep 10
+
+    - name: Run integration tests
+      env:
+        DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
+        REDIS_HOST: localhost
+        REDIS_PORT: 6379
+        REDIS_DB: 15
+        ENVIRONMENT: test
+        TESTING: true
+      run: |
+        pytest tests/integration/ \
+          --cov=src \
+          --cov-report=xml \
+          --junit-xml=junit-integration.xml \
+          -v
+
+    - name: Upload integration test coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: integration
+        name: integration-tests
+
+    - name: Upload integration test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: integration-test-results
+        path: junit-integration.xml
+
+  test-e2e:
+    runs-on: ubuntu-latest
+    name: End-to-End Tests
+    needs: [test-unit, test-integration]
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: test_password
+          POSTGRES_USER: test_user
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+      redis:
+        image: redis:7
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.11
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Install test dependencies
+      run: |
+        pip install pytest-cov pytest-mock pytest-asyncio pytest-timeout
+
+    - name: Wait for services
+      run: |
+        sleep 10
+
+    - name: Run E2E tests
+      env:
+        DATABASE_URL: postgresql://test_user:test_password@localhost:5432/test_db
+        REDIS_HOST: localhost
+        REDIS_PORT: 6379
+        REDIS_DB: 15
+        ENVIRONMENT: test
+        TESTING: true
+      run: |
+        pytest tests/e2e/ \
+          --junit-xml=junit-e2e.xml \
+          -v \
+          --timeout=300
+
+    - name: Upload E2E test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: e2e-test-results
+        path: junit-e2e.xml
+
+  test-performance:
+    runs-on: ubuntu-latest
+    name: Performance Tests
+    needs: [test-unit, test-integration]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.11
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Install test dependencies
+      run: |
+        pip install pytest-mock pytest-asyncio pytest-timeout psutil
+
+    - name: Run performance tests
+      env:
+        ENVIRONMENT: test
+        TESTING: true
+      run: |
+        pytest tests/performance/ \
+          --junit-xml=junit-performance.xml \
+          -v \
+          --timeout=600
+
+    - name: Upload performance test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: performance-test-results
+        path: junit-performance.xml
+
+  test-security:
+    runs-on: ubuntu-latest
+    name: Security Tests
+    needs: [test-unit, test-integration]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.11
+
+    - name: Cache pip dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+
+    - name: Install test dependencies
+      run: |
+        pip install pytest-mock pytest-asyncio safety bandit
+
+    - name: Run security tests
+      env:
+        ENVIRONMENT: test
+        TESTING: true
+      run: |
+        pytest tests/security/ \
+          --junit-xml=junit-security.xml \
+          -v
+
+    - name: Run safety check (dependency vulnerabilities)
+      run: safety check --json --output safety-report.json || true
+
+    - name: Run bandit security linter
+      run: bandit -r src/ -f json -o bandit-report.json || true
+
+    - name: Upload security test results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: security-test-results
+        path: |
+          junit-security.xml
+          safety-report.json
+          bandit-report.json
+
+  build-docker:
+    runs-on: ubuntu-latest
+    name: Build Docker Image
+    needs: [test-unit, test-integration]
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Login to Docker Hub
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      uses: docker/login-action@v3
+      with:
+        username: ${{ secrets.DOCKER_USERNAME }}
+        password: ${{ secrets.DOCKER_PASSWORD }}
+
+    - name: Extract metadata
+      id: meta
+      uses: docker/metadata-action@v5
+      with:
+        images: document-processing-microservice
+        tags: |
+          type=ref,event=branch
+          type=ref,event=pr
+          type=sha,prefix={{branch}}-
+          type=raw,value=latest,enable={{is_default_branch}}
+
+    - name: Build Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        platforms: linux/amd64,linux/arm64
+        push: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        tags: ${{ steps.meta.outputs.tags }}
+        labels: ${{ steps.meta.outputs.labels }}
+        cache-from: type=gha
+        cache-to: type=gha,mode=max
+
+  deploy-staging:
+    runs-on: ubuntu-latest
+    name: Deploy to Staging
+    needs: [test-e2e, test-security, build-docker]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/develop'
+    environment: staging
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Deploy to staging environment
+      run: |
+        echo "Deploying to staging environment..."
+        # Add actual deployment steps here
+        # This could involve:
+        # - Updating Kubernetes manifests
+        # - Calling deployment API
+        # - Running Terraform/Ansible
+        # - Updating cloud service configurations
+
+    - name: Run post-deployment health checks
+      run: |
+        echo "Running health checks on staging..."
+        # Add health check verification here
+        # curl https://staging-api.example.com/api/health
+
+  deploy-production:
+    runs-on: ubuntu-latest
+    name: Deploy to Production
+    needs: [test-e2e, test-security, build-docker]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    environment: production
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Deploy to production environment
+      run: |
+        echo "Deploying to production environment..."
+        # Add actual deployment steps here
+
+    - name: Run post-deployment health checks
+      run: |
+        echo "Running health checks on production..."
+        # Add health check verification here
+
+    - name: Create deployment notification
+      if: always()
+      run: |
+        echo "Sending deployment notification..."
+        # Add notification logic here (Slack, email, etc.)
+
+  test-results-summary:
+    runs-on: ubuntu-latest
+    name: Test Results Summary
+    needs: [test-unit, test-integration, test-e2e, test-performance, test-security]
+    if: always()
+
+    steps:
+    - name: Download all test artifacts
+      uses: actions/download-artifact@v3
+
+    - name: Generate test summary
+      run: |
+        echo "## Test Results Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+
+        echo "### Test Status" >> $GITHUB_STEP_SUMMARY
+        echo "- Unit Tests: ${{ needs.test-unit.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Integration Tests: ${{ needs.test-integration.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- E2E Tests: ${{ needs.test-e2e.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Performance Tests: ${{ needs.test-performance.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "- Security Tests: ${{ needs.test-security.result }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+
+        echo "### Coverage Information" >> $GITHUB_STEP_SUMMARY
+        echo "Coverage reports are available in the artifacts." >> $GITHUB_STEP_SUMMARY
+
+    - name: Upload combined test results
+      uses: actions/upload-artifact@v3
+      with:
+        name: all-test-results
+        path: |
+          **/junit-*.xml
+          **/coverage.xml
+          **/htmlcov/
+          **/*-report.json

@@ -1,0 +1,20 @@
+Final Database Session Fix Test
+===============================
+
+This document tests the complete fix for the background task database session issue.
+After implementing the new session wrapper, documents should process successfully
+through all stages:
+
+1. Text extraction (25%)
+2. Text chunking (50%)
+3. Embedding generation (75%)
+4. Database storage (90%)
+5. Completion (100%)
+
+The fix ensures that background tasks get their own fresh database session
+instead of using the expired session from the main HTTP request.
+
+This should resolve the issue where documents were getting stuck at 75%
+with chunks failing to be stored in the database.
+
+Test timestamp: 2025-09-20 22:50:00

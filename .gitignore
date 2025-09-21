@@ -1,0 +1,91 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+eggs/
+parts/
+bin/
+var/
+sdist/
+develop-eggs/
+.installed.cfg
+lib/
+lib64/
+*.manifest
+*.spec
+
+# Virtual Environment
+venv/
+ENV/
+env/
+.venv
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Environment files
+.env
+.env.local
+.env.development
+.env.production
+*.env
+!.env.example
+!.env.production.example
+
+# Temporary files
+*.log
+*.tmp
+/tmp/
+/temp/
+/logs/
+
+# Test files
+.coverage
+htmlcov/
+.pytest_cache/
+.tox/
+.coverage.*
+*.cover
+.hypothesis/
+test_files/
+
+# Database
+*.db
+*.sqlite3
+*.sqlite
+
+# Uploaded files
+uploads/
+document_uploads/
+
+# System files
+Thumbs.db
+desktop.ini
+
+# Backup files
+*.bak
+*.backup
+
+# Secrets (never commit these)
+*.key
+*.pem
+*.crt
+secrets/
+
+# Local test files
+test_local.py
+create_test_user.py
+verify_pgvector_data.py
+simple_semantic_search_example.py
+semantic_retrieval_guide.py
+test_final_datetime_fix.txt

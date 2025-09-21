@@ -1,0 +1,52 @@
+Document Processing Microservice Test Document
+===============================================
+
+This is a test document for the Document Processing Microservice.
+
+Introduction
+------------
+The Document Processing Microservice is designed to handle document uploads,
+process them into chunks, generate embeddings, and store them in a vector database
+for semantic search capabilities.
+
+Key Features
+------------
+1. Document Upload and Storage
+   - Supports PDF, DOCX, TXT, and Markdown files
+   - Secure file storage with hash verification
+   - File size and type validation
+
+2. Text Extraction
+   - Automatic text extraction from various formats
+   - Preserves document structure and metadata
+   - Page-level tracking for multi-page documents
+
+3. Text Chunking
+   - Intelligent text chunking with overlap
+   - Token counting for optimal chunk sizes
+   - Maintains context across chunk boundaries
+
+4. Embedding Generation
+   - OpenAI text-embedding-3-small model
+   - 1536-dimensional vectors
+   - Batch processing for efficiency
+
+5. Vector Storage
+   - PostgreSQL with pgvector extension
+   - Efficient similarity search
+   - Hierarchical data organization
+
+Testing the Service
+-------------------
+This document serves as a test case for the microservice.
+It should be:
+1. Successfully uploaded
+2. Extracted and chunked
+3. Embedded using OpenAI
+4. Stored in the database
+5. Retrievable via API
+
+Conclusion
+----------
+The Document Processing Microservice provides a robust foundation
+for document-based AI applications with semantic search capabilities.

@@ -1,0 +1,40 @@
+[build]
+builder = "nixpacks"
+buildCommand = "pip install -r requirements.txt"
+
+[deploy]
+startCommand = "bash start.sh"
+healthcheckPath = "/api/health"
+healthcheckTimeout = 300
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
+
+[environment]
+# Environment will be set in Railway dashboard
+ENVIRONMENT = "production"
+PORT = "$PORT"  # Railway automatically provides this
+HOST = "0.0.0.0"
+WORKERS = "4"
+RELOAD = "false"
+
+# Logging configuration for production
+LOG_LEVEL = "INFO"
+LOG_FORMAT = "json"
+
+# File upload settings for Railway
+TEMP_UPLOAD_DIR = "/tmp/document_uploads"
+MAX_UPLOAD_SIZE_MB = "50"
+
+# Performance optimizations
+RATE_LIMIT_REQUESTS_PER_HOUR = "5000"
+RATE_LIMIT_UPLOAD_PER_HOUR = "500"
+
+# Background processing
+JOB_POLLING_INTERVAL = "3"
+
+# Security settings
+FILE_SCAN_ENABLED = "true"
+INPUT_SANITIZATION = "true"
+
+[experimental]
+nixpacksConfigPath = "nixpacks.toml"

@@ -1,0 +1,23 @@
+Database Session Fix Test Document
+====================================
+
+This document tests whether the database session fix resolves
+the issue where documents get stuck at 75% because the background
+task cannot store chunks due to a closed database session.
+
+Expected Behavior:
+1. Document uploads successfully
+2. Progresses through text extraction (25%)
+3. Progresses through chunking (50%)
+4. Progresses through embedding generation (75%)
+5. Successfully stores chunks in database (90%)
+6. Completes processing (100%)
+
+This test verifies that background tasks now get their own
+fresh database session instead of using the expired session
+from the main request.
+
+Test Content Section:
+The document processor should create multiple chunks from this content.
+Each chunk should be stored in the database with its corresponding embedding.
+The total_chunks field should reflect the actual number of chunks created.

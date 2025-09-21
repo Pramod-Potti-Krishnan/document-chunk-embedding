@@ -1,0 +1,23 @@
+Test Document for Fixed Processing
+====================================
+
+This is a test document to verify that the document processing pipeline
+now works correctly after fixing the TextChunker parameter issue.
+
+Key Features Tested:
+1. Text extraction from TXT files
+2. Text chunking with proper parameters
+3. Embedding generation using OpenAI API
+4. Storage in PostgreSQL with pgvector
+
+Expected Result:
+- Document should process beyond 50%
+- Chunks should be created successfully
+- Embeddings should be generated
+- Final status should be "completed"
+
+This document has enough content to create multiple chunks
+and test the complete processing pipeline end-to-end.
+The chunking system should work with the correct parameter
+names: chunk_size_max and chunk_overlap instead of the
+incorrect chunk_size parameter that was causing failures.

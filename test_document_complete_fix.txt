@@ -1,0 +1,25 @@
+Complete Database Session Fix Test Document
+===========================================
+
+This document tests the final fix for the document processing pipeline
+after resolving both the TextChunker parameter issue and the database
+session management in background tasks.
+
+Expected Behavior:
+1. Document uploads successfully
+2. Progresses through text extraction (25%)
+3. Progresses through chunking (50%)
+4. Progresses through embedding generation (75%)
+5. Successfully stores chunks in database (90%)
+6. Completes processing (100%)
+
+The complete fix includes:
+- Using correct parameter names: chunk_size_max and chunk_overlap
+- Providing fresh database sessions for background tasks
+- Proper error handling and transaction management
+
+This test content should create multiple chunks that can be
+successfully stored in the database with their embeddings.
+Each chunk will be indexed for vector similarity search.
+
+Timestamp: 2025-09-20 22:55:00

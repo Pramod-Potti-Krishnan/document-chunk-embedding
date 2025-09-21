@@ -1,0 +1,44 @@
+# Core dependencies
+fastapi
+uvicorn[standard]
+python-multipart
+pydantic
+pydantic-settings
+
+# Database & Vector Storage
+supabase
+asyncpg
+pgvector
+sqlalchemy
+
+# Document Processing
+PyPDF2
+pdfplumber
+python-docx
+chardet
+pypandoc
+
+# ML & Embeddings
+openai
+numpy
+tiktoken
+
+# Authentication & Security
+python-jose[cryptography]
+passlib[bcrypt]
+
+# Utilities
+python-dotenv
+httpx
+tenacity
+structlog
+prometheus-client
+
+# Development & Testing
+pytest
+pytest-asyncio
+pytest-cov
+pytest-mock
+black
+ruff
+mypy

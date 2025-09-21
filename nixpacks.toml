@@ -1,0 +1,27 @@
+[variables]
+NIXPACKS_PYTHON_VERSION = "3.11"
+PIP_NO_CACHE_DIR = "1"
+PYTHONUNBUFFERED = "1"
+PYTHONDONTWRITEBYTECODE = "1"
+
+[phases.install]
+dependsOn = ["setup"]
+cmds = [
+    "apt-get update && apt-get install -y libpq-dev gcc g++ build-essential poppler-utils",
+    "pip install --upgrade pip",
+    "pip install -r requirements.txt"
+]
+
+[phases.build]
+dependsOn = ["install"]
+cmds = [
+    "mkdir -p /tmp/document_uploads",
+    "chmod +x start.sh"
+]
+
+[start]
+cmd = "bash start.sh"
+
+[staticAssets]
+# Serve static files if any
+"test_interface.html" = "./"
