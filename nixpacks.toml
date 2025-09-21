@@ -1,28 +1,24 @@
 [variables]
-NIXPACKS_PYTHON_VERSION = "3.11"
 PIP_NO_CACHE_DIR = "1"
 PYTHONUNBUFFERED = "1"
 PYTHONDONTWRITEBYTECODE = "1"
 
 [phases.install]
-dependsOn = ["setup"]
 cmds = [
     "apt-get update && apt-get install -y libpq-dev gcc g++ build-essential poppler-utils python3-dev postgresql-client python3-pip",
-    "python -m ensurepip --upgrade || python -m ensurepip || apt-get install -y python3-pip",
-    "python -m pip install --upgrade pip setuptools wheel",
-    "python -m pip install psycopg2-binary==2.9.10",
-    "python -m pip install -r requirements.txt"
+    "/usr/bin/python3 -m pip install --upgrade pip setuptools wheel",
+    "/usr/bin/python3 -m pip install psycopg2-binary==2.9.10",
+    "/usr/bin/python3 -m pip install -r requirements.txt"
 ]
 
 [phases.build]
-dependsOn = ["install"]
 cmds = [
     "mkdir -p /tmp/document_uploads",
     "chmod +x start.sh"
 ]
 
 [start]
-cmd = "bash start.sh"
+cmd = "/usr/bin/python3 -m uvicorn src.main:app --host 0.0.0.0 --port ${PORT:-8000}"
 
 [staticAssets]
 # Serve static files if any
