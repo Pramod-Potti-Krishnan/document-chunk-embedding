@@ -223,6 +223,7 @@ async def health_check():
 
     # Check services
     services = {}
+    metrics = {}  # For non-boolean metrics
     errors = []
 
     # Database connection check
@@ -232,7 +233,7 @@ async def health_check():
             result = conn.execute(text("SELECT 1, NOW() as db_time"))
             row = result.fetchone()
             services["database"] = True
-            services["database_time"] = str(row[1]) if row else None
+            metrics["database_time"] = str(row[1]) if row else None
     except Exception as e:
         services["database"] = False
         errors.append(f"Database: {str(e)[:100]}")
@@ -282,8 +283,8 @@ async def health_check():
         disk = psutil.disk_usage('/')
         services["memory_available"] = memory.available > 100 * 1024 * 1024  # 100MB
         services["disk_available"] = disk.free > 500 * 1024 * 1024  # 500MB
-        services["memory_usage_percent"] = memory.percent
-        services["disk_usage_percent"] = (disk.used / disk.total) * 100
+        metrics["memory_usage_percent"] = memory.percent
+        metrics["disk_usage_percent"] = (disk.used / disk.total) * 100
     except Exception as e:
         services["memory_available"] = False
         services["disk_available"] = False
@@ -311,6 +312,7 @@ async def health_check():
         "version": settings.app_version,
         "environment": settings.environment,
         "services": services,
+        "metrics": metrics,
         "uptime_seconds": uptime_seconds,
         "timestamp": datetime.utcnow()
     }

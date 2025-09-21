@@ -198,6 +198,7 @@ class HealthResponse(BaseModel):
     version: str
     environment: str
     services: Dict[str, bool]
+    metrics: Dict[str, Any] = {}  # Additional metrics (non-boolean values)
     uptime_seconds: float
     timestamp: datetime
 
