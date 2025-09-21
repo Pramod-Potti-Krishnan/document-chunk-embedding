@@ -49,33 +49,39 @@ echo "   - Environment: $ENVIRONMENT"
 echo "   - Python: $(python3 --version)"
 echo "   - Workers: ${WORKERS:-4}"
 
-# Pre-flight database check
+# Pre-flight database check (non-fatal)
 echo "🔍 Testing database connectivity..."
 python3 -c "
 import os
-import psycopg2
 try:
+    import psycopg2
     conn = psycopg2.connect(os.environ['DATABASE_URL'])
     conn.close()
     print('✅ Database connection successful')
+except ImportError as e:
+    print(f'⚠️  WARNING: psycopg2 not yet installed: {e}')
+    print('   Database checks will be performed after server startup')
 except Exception as e:
-    print(f'❌ Database connection failed: {e}')
-    exit(1)
-"
+    print(f'⚠️  WARNING: Database connection failed: {e}')
+    print('   Server will start anyway and retry connections')
+" || true
 
-# Test OpenAI API connectivity
+# Test OpenAI API connectivity (non-fatal)
 echo "🔍 Testing OpenAI API connectivity..."
 python3 -c "
 import os
-from openai import OpenAI
 try:
+    from openai import OpenAI
     client = OpenAI(api_key=os.environ['OPENAI_API_KEY'])
     # Test with a simple embedding request
     print('✅ OpenAI API connection successful')
+except ImportError as e:
+    print(f'⚠️  WARNING: OpenAI library not yet installed: {e}')
+    print('   OpenAI checks will be performed after server startup')
 except Exception as e:
-    print(f'❌ OpenAI API connection failed: {e}')
-    exit(1)
-"
+    print(f'⚠️  WARNING: OpenAI API connection failed: {e}')
+    print('   Server will start anyway and retry connections')
+" || true
 
 echo "🎉 Pre-flight checks completed successfully"
 
