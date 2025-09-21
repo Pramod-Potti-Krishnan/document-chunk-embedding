@@ -5,10 +5,11 @@ PYTHONDONTWRITEBYTECODE = "1"
 
 [phases.install]
 cmds = [
-    "apt-get update && apt-get install -y libpq-dev gcc g++ build-essential poppler-utils python3-dev postgresql-client python3-pip",
-    "/usr/bin/python3 -m pip install --upgrade pip setuptools wheel",
-    "/usr/bin/python3 -m pip install psycopg2-binary==2.9.10",
-    "/usr/bin/python3 -m pip install -r requirements.txt"
+    "apt-get update && apt-get install -y libpq-dev gcc g++ build-essential poppler-utils python3-dev postgresql-client python3-pip python3-venv",
+    "/usr/bin/python3 -m venv /opt/venv",
+    "/opt/venv/bin/python -m pip install --upgrade pip setuptools wheel",
+    "/opt/venv/bin/python -m pip install psycopg2-binary==2.9.10",
+    "/opt/venv/bin/python -m pip install -r requirements.txt"
 ]
 
 [phases.build]
@@ -18,7 +19,7 @@ cmds = [
 ]
 
 [start]
-cmd = "/usr/bin/python3 -m uvicorn src.main:app --host 0.0.0.0 --port ${PORT:-8000}"
+cmd = "/opt/venv/bin/python -m uvicorn src.main:app --host 0.0.0.0 --port ${PORT:-8000}"
 
 [staticAssets]
 # Serve static files if any
